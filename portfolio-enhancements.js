@@ -26,6 +26,16 @@ document.addEventListener('DOMContentLoaded', () => {
     .cv-preview { width:100%; min-height:260px; border:1px solid #51617d; border-radius:7px; background:#fff; }
     .cv-panel h3 { font-size:26px; margin:0 0 8px; }
     .cv-panel p { color:#c2cada; max-width:520px; }
+    .portfolio-gallery { width:min(1080px,calc(100% - 24px)); padding:0; border:1px solid #566887; border-radius:10px; color:#f7f8ff; background:#0c1220; }
+    .portfolio-gallery::backdrop { background:rgba(0,0,0,.82); }
+    .portfolio-gallery-head { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:15px 18px; border-bottom:1px solid #33435f; }
+    .portfolio-gallery-close { border:0; background:transparent; color:#fff; font-size:28px; line-height:1; cursor:pointer; }
+    .portfolio-gallery-stage { display:grid; place-items:center; min-height:320px; padding:16px; background:#070b13; }
+    .portfolio-gallery-stage img { display:block; max-width:100%; max-height:68vh; object-fit:contain; border:1px solid #34445f; }
+    .portfolio-gallery-controls { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 18px; }
+    .portfolio-gallery-controls button { border:1px solid #6e5ce0; border-radius:6px; background:#7c66f2; color:#fff; padding:9px 13px; font:700 13px Inter,Arial,sans-serif; cursor:pointer; }
+    .portfolio-gallery-controls button:disabled { opacity:.42; cursor:not-allowed; }
+    .portfolio-gallery-count { color:#c9d1df; font-size:13px; }
     @media (max-width:760px) {
       .hero { gap:28px!important; }
       .visual { padding-bottom:0!important; }
@@ -54,4 +64,49 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cvSection) {
     cvSection.innerHTML = `<div class="wrap section-shell"><p class="eyebrow">Curriculum Vitae</p><h2>My CV / Resume</h2><div class="cv-panel"><iframe class="cv-preview" src="Fathima-Azra-CV.pdf#view=FitH" title="Fathima Azra CV preview"></iframe><div><h3>Professional CV</h3><p>View my CV directly in the portfolio or download a copy for recruitment, internship, and web development opportunities.</p><div class="project-actions"><a href="Fathima-Azra-CV.pdf" target="_blank">View CV</a><a class="secondary" href="Fathima-Azra-CV.pdf" download>Download CV</a></div></div></div></div>`;
   }
+
+  const galleryDialog = document.createElement('dialog');
+  galleryDialog.className = 'portfolio-gallery';
+  galleryDialog.innerHTML = `
+    <div class="portfolio-gallery-head"><strong id="portfolio-gallery-title">Project UI Gallery</strong><button class="portfolio-gallery-close" type="button" aria-label="Close gallery">&times;</button></div>
+    <div class="portfolio-gallery-stage"><img id="portfolio-gallery-image" alt="Project interface screenshot"></div>
+    <div class="portfolio-gallery-controls"><button type="button" id="portfolio-gallery-prev">Previous</button><span class="portfolio-gallery-count" id="portfolio-gallery-count"></span><button type="button" id="portfolio-gallery-next">Next</button></div>`;
+  document.body.append(galleryDialog);
+
+  const galleryImages = { watch:14, learnhub:9, glowcart:13 };
+  const galleryImage = galleryDialog.querySelector('#portfolio-gallery-image');
+  const galleryTitle = galleryDialog.querySelector('#portfolio-gallery-title');
+  const galleryCount = galleryDialog.querySelector('#portfolio-gallery-count');
+  const previous = galleryDialog.querySelector('#portfolio-gallery-prev');
+  const next = galleryDialog.querySelector('#portfolio-gallery-next');
+  let activeProject = '';
+  let activeIndex = 0;
+
+  function renderGallery() {
+    const total = galleryImages[activeProject];
+    galleryImage.src = `${activeProject}-${String(activeIndex + 1).padStart(2, '0')}.png`;
+    galleryCount.textContent = `${activeIndex + 1} of ${total}`;
+    previous.disabled = activeIndex === 0;
+    next.disabled = activeIndex === total - 1;
+  }
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-gallery]');
+    if (!button || !galleryImages[button.dataset.gallery]) return;
+    activeProject = button.dataset.gallery;
+    activeIndex = 0;
+    galleryTitle.textContent = `${button.closest('article').querySelector('h3').textContent} - UI Screenshots`;
+    renderGallery();
+    galleryDialog.showModal();
+  });
+
+  previous.addEventListener('click', () => { if (activeIndex > 0) { activeIndex -= 1; renderGallery(); } });
+  next.addEventListener('click', () => { if (activeIndex < galleryImages[activeProject] - 1) { activeIndex += 1; renderGallery(); } });
+  galleryDialog.querySelector('.portfolio-gallery-close').addEventListener('click', () => galleryDialog.close());
+  galleryDialog.addEventListener('click', event => { if (event.target === galleryDialog) galleryDialog.close(); });
+  document.addEventListener('keydown', event => {
+    if (!galleryDialog.open) return;
+    if (event.key === 'ArrowLeft') previous.click();
+    if (event.key === 'ArrowRight') next.click();
+  });
 });
